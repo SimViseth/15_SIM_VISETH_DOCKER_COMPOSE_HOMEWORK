@@ -1,0 +1,75 @@
+services:
+  spring:
+    image: spring-image
+    build:
+      context: .
+    container_name: spring-container
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/expense_tracking
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+
+    ports:
+      - "8085:8080"
+  db:
+    image: postgres
+    container_name: db-container
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123
+      - POSTGRES_DB=expense_tracking
+    volumes:
+      - vol_compose:/var/lib/postgresql/data
+
+    ports:
+      - "5434:5432"
+
+  db2:
+    image: postgres
+    container_name: db2-container
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=keycloak_db
+    volumes:
+      - vol2_compose:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak-container
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: db2
+      DB_DATABASE: keycloak_db
+      DB_USER: keycloak
+      DB_PASSWORD: 123
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    depends_on:
+      - db2
+    command: start-dev
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-container
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+volumes:
+  vol_compose:
+  vol2_compose:
